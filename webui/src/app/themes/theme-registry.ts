@@ -24,6 +24,11 @@ const _themes = {
     label: "Neon",
     dark: true,
   },
+  midnight: {
+    key: "midnight" as const,
+    label: "Midnight",
+    dark: true,
+  },
   tundra: {
     key: "tundra" as const,
     label: "Tundra",
@@ -36,4 +41,4 @@ export type ThemeKey = keyof typeof _themes;
 export const themes: Themes<ThemeKey> = _themes;
 
 export const defaultLightTheme = "classic";
-export const defaultDarkTheme = "tundra";
+export const defaultDarkTheme = "midnight";

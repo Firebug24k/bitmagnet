@@ -65,10 +65,44 @@ export class TorrentsTableComponent implements OnInit {
 
   items = Array<generated.TorrentContent>();
 
+  /** infoHash whose magnet was just copied (for the check-mark feedback). */
+  copied?: string;
+  private copiedTimer?: ReturnType<typeof setTimeout>;
+
+  private orderBy?: { field: string; descending: boolean };
+
   ngOnInit() {
     this.dataSource.items$.subscribe((items) => {
       this.items = items;
     });
+    this.controller.controls$.subscribe((ctrl) => {
+      this.orderBy = ctrl.orderBy;
+    });
+  }
+
+  isSorted(field: generated.TorrentContentOrderByField): boolean {
+    return this.orderBy?.field === field;
+  }
+
+  sortIcon(field: generated.TorrentContentOrderByField): string {
+    if (!this.isSorted(field)) {
+      return "unfold_more";
+    }
+    return this.orderBy?.descending ? "arrow_downward" : "arrow_upward";
+  }
+
+  /** Bucket seeders for colour coding: good ≥ 10, ok ≥ 1, poor = 0/unknown. */
+  seederHealth(seeders?: number | null): "good" | "ok" | "poor" {
+    if (seeders === undefined || seeders === null || seeders < 1) {
+      return "poor";
+    }
+    return seeders >= 10 ? "good" : "ok";
+  }
+
+  markCopied(infoHash: string) {
+    this.copied = infoHash;
+    clearTimeout(this.copiedTimer);
+    this.copiedTimer = setTimeout(() => (this.copied = undefined), 1500);
   }
 
   /** Whether the number of selected elements matches the total number of rows. */

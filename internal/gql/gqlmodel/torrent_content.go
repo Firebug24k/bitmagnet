@@ -114,6 +114,7 @@ func TorrentSourceInfosFromTorrent(t model.Torrent) []TorrentSourceInfo {
 type TorrentContentSearchQueryInput struct {
 	q.SearchParams
 	Facets     *gen.TorrentContentFacetsInput
+	Filters    *gen.TorrentContentFiltersInput
 	OrderBy    []gen.TorrentContentOrderByInput
 	InfoHashes graphql.Omittable[[]protocol.ID]
 }
@@ -141,6 +142,17 @@ func (t TorrentContentQuery) Search(
 
 	if input.Facets != nil {
 		options = append(options, torrentContentFacetsOption(*input.Facets))
+	}
+
+	if input.Filters != nil {
+		filterCriteria, filterErr := torrentContentFilterCriteria(*input.Filters, time.Now())
+		if filterErr != nil {
+			return TorrentContentSearchResult{}, filterErr
+		}
+
+		if len(filterCriteria) > 0 {
+			options = append(options, q.Where(filterCriteria...))
+		}
 	}
 
 	if infoHashes, ok := input.InfoHashes.ValueOK(); ok {

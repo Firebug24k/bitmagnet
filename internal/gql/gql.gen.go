@@ -2110,7 +2110,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputContentTypeFacetInput,
+		ec.unmarshalInputDateTimeRangeInput,
 		ec.unmarshalInputGenreFacetInput,
+		ec.unmarshalInputIntRangeInput,
 		ec.unmarshalInputLanguageFacetInput,
 		ec.unmarshalInputQueueEnqueueReprocessTorrentsBatchInput,
 		ec.unmarshalInputQueueJobQueueFacetInput,
@@ -2123,6 +2125,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReleaseYearFacetInput,
 		ec.unmarshalInputSuggestTagsQueryInput,
 		ec.unmarshalInputTorrentContentFacetsInput,
+		ec.unmarshalInputTorrentContentFiltersInput,
 		ec.unmarshalInputTorrentContentOrderByInput,
 		ec.unmarshalInputTorrentContentSearchQueryInput,
 		ec.unmarshalInputTorrentFileTypeFacetInput,
@@ -2801,9 +2804,47 @@ scalar Year
   hasNextPage: Boolean
   infoHashes: [Hash20!]
   facets: TorrentContentFacetsInput
+  """
+  filters are range constraints combined with AND (and with any facet filters)
+  """
+  filters: TorrentContentFiltersInput
   orderBy: [TorrentContentOrderByInput!]
   cached: Boolean
   aggregationBudget: Float
+}
+
+"""
+An inclusive numeric range; either bound may be omitted.
+"""
+input IntRangeInput {
+  gte: Int
+  lte: Int
+}
+
+"""
+An inclusive date/time range; either bound may be omitted.
+"""
+input DateTimeRangeInput {
+  gte: DateTime
+  lte: DateTime
+}
+
+input TorrentContentFiltersInput {
+  """
+  publishedAt is the first-seen time for DHT-crawled torrents
+  """
+  publishedAt: DateTimeRangeInput
+  """
+  publishedWithinDays is a convenience: only torrents published (first seen) within the last N days
+  """
+  publishedWithinDays: Int
+  seeders: IntRangeInput
+  leechers: IntRangeInput
+  """
+  size in bytes
+  """
+  size: IntRangeInput
+  filesCount: IntRangeInput
 }
 
 input ContentTypeFacetInput {
@@ -15909,6 +15950,40 @@ func (ec *executionContext) unmarshalInputContentTypeFacetInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDateTimeRangeInput(ctx context.Context, obj any) (gen.DateTimeRangeInput, error) {
+	var it gen.DateTimeRangeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"gte", "lte"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "gte":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gte"))
+			data, err := ec.unmarshalODateTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Gte = graphql.OmittableOf(data)
+		case "lte":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lte"))
+			data, err := ec.unmarshalODateTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lte = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGenreFacetInput(ctx context.Context, obj any) (gen.GenreFacetInput, error) {
 	var it gen.GenreFacetInput
 	asMap := map[string]any{}
@@ -15944,6 +16019,40 @@ func (ec *executionContext) unmarshalInputGenreFacetInput(ctx context.Context, o
 				return it, err
 			}
 			it.Filter = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputIntRangeInput(ctx context.Context, obj any) (gen.IntRangeInput, error) {
+	var it gen.IntRangeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"gte", "lte"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "gte":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gte"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Gte = graphql.OmittableOf(data)
+		case "lte":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lte"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lte = graphql.OmittableOf(data)
 		}
 	}
 
@@ -16528,6 +16637,68 @@ func (ec *executionContext) unmarshalInputTorrentContentFacetsInput(ctx context.
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTorrentContentFiltersInput(ctx context.Context, obj any) (gen.TorrentContentFiltersInput, error) {
+	var it gen.TorrentContentFiltersInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"publishedAt", "publishedWithinDays", "seeders", "leechers", "size", "filesCount"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "publishedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publishedAt"))
+			data, err := ec.unmarshalODateTimeRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐDateTimeRangeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PublishedAt = graphql.OmittableOf(data)
+		case "publishedWithinDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publishedWithinDays"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PublishedWithinDays = graphql.OmittableOf(data)
+		case "seeders":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("seeders"))
+			data, err := ec.unmarshalOIntRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐIntRangeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Seeders = graphql.OmittableOf(data)
+		case "leechers":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("leechers"))
+			data, err := ec.unmarshalOIntRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐIntRangeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Leechers = graphql.OmittableOf(data)
+		case "size":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+			data, err := ec.unmarshalOIntRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐIntRangeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Size = graphql.OmittableOf(data)
+		case "filesCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filesCount"))
+			data, err := ec.unmarshalOIntRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐIntRangeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FilesCount = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTorrentContentOrderByInput(ctx context.Context, obj any) (gen.TorrentContentOrderByInput, error) {
 	var it gen.TorrentContentOrderByInput
 	asMap := map[string]any{}
@@ -16569,7 +16740,7 @@ func (ec *executionContext) unmarshalInputTorrentContentSearchQueryInput(ctx con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"queryString", "limit", "page", "offset", "totalCount", "hasNextPage", "infoHashes", "facets", "orderBy", "cached", "aggregationBudget"}
+	fieldsInOrder := [...]string{"queryString", "limit", "page", "offset", "totalCount", "hasNextPage", "infoHashes", "facets", "filters", "orderBy", "cached", "aggregationBudget"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16632,6 +16803,13 @@ func (ec *executionContext) unmarshalInputTorrentContentSearchQueryInput(ctx con
 				return it, err
 			}
 			it.Facets = data
+		case "filters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
+			data, err := ec.unmarshalOTorrentContentFiltersInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐTorrentContentFiltersInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filters = data
 		case "orderBy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 			data, err := ec.unmarshalOTorrentContentOrderByInput2ᚕgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐTorrentContentOrderByInputᚄ(ctx, v)
@@ -22318,6 +22496,14 @@ func (ec *executionContext) marshalODateTime2ᚖtimeᚐTime(ctx context.Context,
 	return res
 }
 
+func (ec *executionContext) unmarshalODateTimeRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐDateTimeRangeInput(ctx context.Context, v any) (*gen.DateTimeRangeInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDateTimeRangeInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalODuration2ᚖtimeᚐDuration(ctx context.Context, v any) (*time.Duration, error) {
 	if v == nil {
 		return nil, nil
@@ -22614,6 +22800,30 @@ func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.S
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOIntRangeInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐIntRangeInput(ctx context.Context, v any) (*gen.IntRangeInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputIntRangeInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOLanguage2ᚕgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋmodelᚐLanguageᚄ(ctx context.Context, v any) ([]model.Language, error) {
@@ -23152,6 +23362,14 @@ func (ec *executionContext) unmarshalOTorrentContentFacetsInput2ᚖgithubᚗcom�
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputTorrentContentFacetsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOTorrentContentFiltersInput2ᚖgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐTorrentContentFiltersInput(ctx context.Context, v any) (*gen.TorrentContentFiltersInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTorrentContentFiltersInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

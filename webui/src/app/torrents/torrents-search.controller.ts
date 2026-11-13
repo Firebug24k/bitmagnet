@@ -36,12 +36,67 @@ const compareTorrentSelection = (
   return a === b;
 };
 
+/**
+ * Range filters. Sizes are in GiB in the UI (converted to bytes for the API);
+ * seenWithinDays maps to publishedWithinDays (first-seen time for DHT torrents).
+ */
+export type TorrentFilters = {
+  seenWithinDays?: number;
+  seedersMin?: number;
+  seedersMax?: number;
+  leechersMin?: number;
+  sizeMinGb?: number;
+  sizeMaxGb?: number;
+};
+
+export const filterKeys = [
+  "seenWithinDays",
+  "seedersMin",
+  "seedersMax",
+  "leechersMin",
+  "sizeMinGb",
+  "sizeMaxGb",
+] as const satisfies ReadonlyArray<keyof TorrentFilters>;
+
+export type FilterKey = (typeof filterKeys)[number];
+
+export const emptyFilters: TorrentFilters = {};
+
+export const hasActiveFilters = (f: TorrentFilters): boolean =>
+  filterKeys.some((k) => f[k] !== undefined);
+
+const GIB = 1024 ** 3;
+
+const intRange = (
+  gte?: number,
+  lte?: number,
+): generated.IntRangeInput | undefined =>
+  gte === undefined && lte === undefined ? undefined : { gte, lte };
+
+export const filtersToInput = (
+  f: TorrentFilters,
+): generated.TorrentContentFiltersInput | undefined => {
+  if (!hasActiveFilters(f)) {
+    return undefined;
+  }
+  return {
+    publishedWithinDays: f.seenWithinDays,
+    seeders: intRange(f.seedersMin, f.seedersMax),
+    leechers: intRange(f.leechersMin),
+    size: intRange(
+      f.sizeMinGb === undefined ? undefined : Math.round(f.sizeMinGb * GIB),
+      f.sizeMaxGb === undefined ? undefined : Math.round(f.sizeMaxGb * GIB),
+    ),
+  };
+};
+
 export type TorrentSearchControls = {
   limit: number;
   page: number;
   queryString?: string;
   contentType: ContentTypeSelection;
   orderBy: OrderBySelection;
+  filters: TorrentFilters;
   facets: {
     genre: FacetInput<string>;
     language: FacetInput<generated.Language>;
@@ -64,6 +119,7 @@ const controlsToQueryVariables = (
     totalCount: true,
     hasNextPage: true,
     orderBy: [ctrl.orderBy],
+    filters: filtersToInput(ctrl.filters),
     facets: {
       contentType: {
         aggregate: true,
@@ -317,6 +373,51 @@ export class TorrentsSearchController {
       },
       page: 1,
     }));
+  }
+
+  setFilter(key: FilterKey, value: number | null | undefined) {
+    const v =
+      value === null || value === undefined || Number.isNaN(value) || value < 0
+        ? undefined
+        : value;
+    this.update((ctrl) => {
+      const filters = { ...ctrl.filters };
+      if (v === undefined) {
+        delete filters[key];
+      } else {
+        filters[key] = v;
+      }
+      return { ...ctrl, filters, page: 1 };
+    });
+  }
+
+  clearFilters() {
+    this.update((ctrl) => ({ ...ctrl, filters: emptyFilters, page: 1 }));
+  }
+
+  /**
+   * Sort by a column header: selecting the active field flips direction,
+   * selecting a new field uses that field's natural default direction.
+   */
+  sortBy(field: generated.TorrentContentOrderByField) {
+    this.update((ctrl) => {
+      if (ctrl.orderBy.field === field) {
+        return {
+          ...ctrl,
+          orderBy: { field, descending: !ctrl.orderBy.descending },
+          page: 1,
+        };
+      }
+      return {
+        ...ctrl,
+        orderBy: {
+          field,
+          descending:
+            orderByOptions.find((o) => o.field === field)?.descending ?? true,
+        },
+        page: 1,
+      };
+    });
   }
 
   handlePageEvent(event: PageEvent) {

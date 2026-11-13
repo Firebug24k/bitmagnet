@@ -1,0 +1,66 @@
+<div class="saved">
+  <div class="saved-header">
+    <span class="title"><mat-icon>bookmarks</mat-icon>Saved searches</span>
+    @if (!saving) {
+      <button
+        type="button"
+        mat-icon-button
+        class="add"
+        (click)="startSave()"
+        matTooltip="Save the current search and filters"
+        aria-label="Save current search"
+      >
+        <mat-icon>bookmark_add</mat-icon>
+      </button>
+    }
+  </div>
+  @if (saving) {
+    <div class="save-form">
+      <input
+        type="text"
+        [formControl]="name"
+        placeholder="Name"
+        aria-label="Saved search name"
+        (keyup.escape)="cancelSave()"
+        (keyup.enter)="confirmSave()"
+      />
+      <button
+        type="button"
+        mat-icon-button
+        (click)="confirmSave()"
+        aria-label="Save"
+      >
+        <mat-icon>check</mat-icon>
+      </button>
+      <button
+        type="button"
+        mat-icon-button
+        (click)="cancelSave()"
+        aria-label="Cancel"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+  @if (searches.length) {
+    <ul>
+      @for (s of searches; track s.id) {
+        <li [class.current]="isCurrent(s)" (click)="apply(s)">
+          <span class="name">{{ s.name }}</span>
+          <button
+            type="button"
+            class="remove"
+            (click)="remove(s, $event)"
+            [attr.aria-label]="'Delete saved search ' + s.name"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (!saving) {
+    <p class="empty">
+      Set up filters, then save them here for one-click reuse.
+    </p>
+  }
+</div>

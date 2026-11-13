@@ -1,0 +1,115 @@
+.saved {
+  margin: 16px 14px 4px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--bm-border);
+  border-radius: 14px;
+  background: var(--bm-surface);
+}
+
+.saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .add {
+    --mdc-icon-button-state-layer-size: 34px;
+    padding: 5px;
+  }
+}
+
+.save-form {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 0;
+  input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--bm-border);
+    background: transparent;
+    color: var(--mat-app-text-color, inherit);
+    outline: none;
+    &:focus {
+      border-color: var(--bm-accent);
+      box-shadow: 0 0 0 3px var(--bm-accent-soft);
+    }
+  }
+  button {
+    --mdc-icon-button-state-layer-size: 32px;
+    padding: 4px;
+  }
+}
+
+ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  &:hover {
+    background: var(--bm-surface-hover);
+    .remove {
+      opacity: 1;
+    }
+  }
+  &.current {
+    background: var(--bm-accent-soft);
+    color: var(--bm-accent);
+    font-weight: 600;
+  }
+  .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .remove {
+    display: inline-flex;
+    opacity: 0;
+    border: 0;
+    background: transparent;
+    color: var(--bm-muted);
+    cursor: pointer;
+    padding: 2px;
+    transition: opacity 120ms;
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    &:hover {
+      color: inherit;
+    }
+  }
+}
+
+@media (hover: none) {
+  li .remove {
+    opacity: 1;
+  }
+}
+
+.empty {
+  margin: 2px 0 4px;
+  font-size: 0.8rem;
+  color: var(--bm-muted);
+}

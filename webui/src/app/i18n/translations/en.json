@@ -268,7 +268,7 @@
       "info_hash": "Info hash",
       "leechers": "Leechers",
       "name": "Name",
-      "published_at": "Published at",
+      "published_at": "First seen",
       "relevance": "Relevance",
       "seeders": "Seeders",
       "size": "Size",
@@ -277,7 +277,7 @@
     "original_release_date": "Original release date",
     "permalink": "Permalink",
     "poster": "Poster",
-    "published": "Published",
+    "published": "First seen",
     "rating": "Rating",
     "refresh": "Refresh results",
     "reprocess": {

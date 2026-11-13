@@ -1,0 +1,144 @@
+@if (expanded) {
+  <div class="filters-panel">
+    <div class="filter-group">
+      <div class="group-label">
+        <mat-icon>schedule</mat-icon>First seen within
+      </div>
+      <div class="presets">
+        <button
+          type="button"
+          class="preset"
+          [class.active]="filters.seenWithinDays === undefined"
+          (click)="set('seenWithinDays', undefined)"
+        >
+          Any
+        </button>
+        @for (d of seenPresets; track d) {
+          <button
+            type="button"
+            class="preset"
+            [class.active]="filters.seenWithinDays === d"
+            (click)="preset('seenWithinDays', d)"
+          >
+            {{ d === 1 ? "24h" : d + "d" }}
+          </button>
+        }
+        <label class="inline-number">
+          <input
+            type="number"
+            min="1"
+            step="1"
+            placeholder="N"
+            [value]="filters.seenWithinDays ?? ''"
+            (change)="fromInput('seenWithinDays', $event)"
+            aria-label="First seen within N days"
+          />
+          <span>days</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="group-label"><mat-icon>arrow_upward</mat-icon>Seeders</div>
+      <div class="presets">
+        @for (s of seederPresets; track s) {
+          <button
+            type="button"
+            class="preset"
+            [class.active]="filters.seedersMin === s"
+            (click)="preset('seedersMin', s)"
+          >
+            ≥{{ s }}
+          </button>
+        }
+        <label class="inline-number">
+          <span>min</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [value]="filters.seedersMin ?? ''"
+            (change)="fromInput('seedersMin', $event)"
+            aria-label="Minimum seeders"
+          />
+        </label>
+        <label class="inline-number">
+          <span>max</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [value]="filters.seedersMax ?? ''"
+            (change)="fromInput('seedersMax', $event)"
+            aria-label="Maximum seeders"
+          />
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-group compact">
+      <div class="group-label"><mat-icon>arrow_downward</mat-icon>Leechers</div>
+      <div class="presets">
+        <label class="inline-number">
+          <span>min</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [value]="filters.leechersMin ?? ''"
+            (change)="fromInput('leechersMin', $event)"
+            aria-label="Minimum leechers"
+          />
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-group compact">
+      <div class="group-label"><mat-icon>straighten</mat-icon>Size (GB)</div>
+      <div class="presets">
+        <label class="inline-number">
+          <span>min</span>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            [value]="filters.sizeMinGb ?? ''"
+            (change)="fromInput('sizeMinGb', $event, true)"
+            aria-label="Minimum size in GB"
+          />
+        </label>
+        <label class="inline-number">
+          <span>max</span>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            [value]="filters.sizeMaxGb ?? ''"
+            (change)="fromInput('sizeMaxGb', $event, true)"
+            aria-label="Maximum size in GB"
+          />
+        </label>
+      </div>
+    </div>
+  </div>
+}
+
+@if (active) {
+  <div class="active-filters">
+    @for (chip of activeChips; track chip.key) {
+      <span class="active-chip">
+        {{ chip.label }}
+        <button
+          type="button"
+          (click)="set(chip.key, undefined)"
+          [attr.aria-label]="'Remove ' + chip.label"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </span>
+    }
+    <button type="button" class="clear-all" (click)="clear()">
+      Clear filters
+    </button>
+  </div>
+}

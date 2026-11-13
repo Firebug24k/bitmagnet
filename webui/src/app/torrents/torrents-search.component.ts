@@ -22,11 +22,18 @@ import { GraphQLModule } from "../graphql/graphql.module";
 import { PaginatorComponent } from "../paginator/paginator.component";
 import { BreakpointsService } from "../layout/breakpoints.service";
 import * as generated from "../graphql/generated";
-import { intParam, stringListParam, stringParam } from "../util/query-string";
+import {
+  floatParam,
+  intParam,
+  stringListParam,
+  stringParam,
+} from "../util/query-string";
 import { AppModule } from "../app.module";
 import { DocumentTitleComponent } from "../layout/document-title.component";
 import { IntEstimatePipe } from "../pipes/int-estimate.pipe";
 import { TorrentsBulkActionsComponent } from "./torrents-bulk-actions.component";
+import { TorrentsFiltersComponent } from "./torrents-filters.component";
+import { SavedSearchesComponent } from "./saved-searches.component";
 import { contentTypeList, contentTypeMap } from "./content-types";
 import {
   allColumns,
@@ -40,6 +47,9 @@ import {
 import {
   ContentTypeSelection,
   defaultOrderBy,
+  emptyFilters,
+  FilterKey,
+  TorrentFilters,
   FacetInfo,
   facets,
   inactiveFacet,
@@ -65,6 +75,8 @@ import {
     GraphQLModule,
     PaginatorComponent,
     TorrentsBulkActionsComponent,
+    TorrentsFiltersComponent,
+    SavedSearchesComponent,
     TorrentsTableComponent,
     IntEstimatePipe,
   ],
@@ -94,6 +106,13 @@ export class TorrentsSearchComponent implements OnInit, OnDestroy {
   compactColumns = compactColumns;
 
   queryString = new FormControl("");
+
+  /** Filter panel open state; starts open on wide screens. */
+  filtersOpen = this.breakpoints.sizeAtLeast("Medium");
+
+  activeFilterCount(ctrl: TorrentSearchControls): number {
+    return Object.values(ctrl.filters).filter((v) => v !== undefined).length;
+  }
 
   result = emptyResult;
 
@@ -190,6 +209,7 @@ const initControls: TorrentSearchControls = {
   limit: defaultLimit,
   contentType: null,
   orderBy: defaultOrderBy,
+  filters: emptyFilters,
   facets: {
     genre: inactiveFacet,
     language: inactiveFacet,
@@ -223,6 +243,7 @@ const paramsToControls = (params: Params): TorrentSearchControls => {
     contentType: contentTypeParam(params),
     limit: intParam(params, "limit") ?? defaultLimit,
     page: intParam(params, "page") ?? 1,
+    filters: filtersFromParams(params),
     selectedTorrent,
     facets: facets.reduce<TorrentSearchControls["facets"]>((acc, facet) => {
       const active = activeFacets?.includes(facet.key) ?? false;
@@ -263,8 +284,41 @@ const controlsToParams = (ctrl: TorrentSearchControls): Params => {
         }
       : {}),
     ...flattenFacets(ctrl.facets),
+    ...filtersToParams(ctrl.filters),
   };
 };
+
+/** URL query-param names for each range filter. */
+export const filterParamNames: Record<FilterKey, string> = {
+  seenWithinDays: "seen_days",
+  seedersMin: "seeders_min",
+  seedersMax: "seeders_max",
+  leechersMin: "leechers_min",
+  sizeMinGb: "size_min_gb",
+  sizeMaxGb: "size_max_gb",
+};
+
+const filtersFromParams = (params: Params): TorrentFilters => {
+  const out: TorrentFilters = {};
+  for (const [key, name] of Object.entries(filterParamNames) as Array<
+    [FilterKey, string]
+  >) {
+    const v = key.startsWith("size")
+      ? floatParam(params, name)
+      : intParam(params, name);
+    if (v !== undefined) {
+      out[key] = v;
+    }
+  }
+  return out;
+};
+
+const filtersToParams = (f: TorrentFilters): Params =>
+  Object.fromEntries(
+    (Object.entries(filterParamNames) as Array<[FilterKey, string]>).map(
+      ([key, name]) => [name, f[key]],
+    ),
+  );
 
 const contentTypeParam = (params: Params): ContentTypeSelection => {
   const str = stringParam(params, "content_type");

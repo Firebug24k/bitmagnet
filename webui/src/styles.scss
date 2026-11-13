@@ -10,10 +10,12 @@
 @use "./app/themes/theme-emitter-component.theme";
 @use "app/torrents/torrents-search-component.theme";
 @use "app/torrents/torrents-table-component.theme";
+@use "app/themes/modern-tokens.theme";
 
 @use "app/themes/classic-theme";
 @use "app/themes/neon-theme";
 @use "app/themes/tundra-theme";
+@use "app/themes/midnight-theme";
 
 @import "@fontsource/roboto";
 @import "@fontsource/material-icons";
@@ -33,6 +35,7 @@
   @include theme-emitter-component.theme($theme);
   @include torrents-search-component.theme($theme);
   @include torrents-table-component.theme($theme);
+  @include modern-tokens.theme($theme);
 }
 
 //.mat-toolbar.toolbar-header {
@@ -54,6 +57,11 @@ html {
     @include mat.all-component-colors(neon-theme.$theme);
     @include app-component-themes(neon-theme.$theme);
     @include neon-theme.theme-vars;
+  }
+  &[data-bitmagnet-theme="midnight"] {
+    @include mat.all-component-colors(midnight-theme.$theme);
+    @include app-component-themes(midnight-theme.$theme);
+    @include midnight-theme.theme-vars;
   }
   &[data-bitmagnet-theme="tundra"] {
     @include mat.all-component-colors(tundra-theme.$theme);
@@ -77,6 +85,7 @@ body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 @mixin mat-icon {

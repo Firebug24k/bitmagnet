@@ -27,6 +27,12 @@ type ContentTypeFacetInput struct {
 	Filter    graphql.Omittable[[]*model.ContentType] `json:"filter,omitempty"`
 }
 
+// An inclusive date/time range; either bound may be omitted.
+type DateTimeRangeInput struct {
+	Gte graphql.Omittable[*time.Time] `json:"gte,omitempty"`
+	Lte graphql.Omittable[*time.Time] `json:"lte,omitempty"`
+}
+
 type GenreAgg struct {
 	Value      string `json:"value"`
 	Label      string `json:"label"`
@@ -50,6 +56,12 @@ type HealthCheck struct {
 type HealthQuery struct {
 	Status HealthStatus  `json:"status"`
 	Checks []HealthCheck `json:"checks"`
+}
+
+// An inclusive numeric range; either bound may be omitted.
+type IntRangeInput struct {
+	Gte graphql.Omittable[*int] `json:"gte,omitempty"`
+	Lte graphql.Omittable[*int] `json:"lte,omitempty"`
 }
 
 type LanguageAgg struct {
@@ -158,6 +170,18 @@ type TorrentContentFacetsInput struct {
 	ReleaseYear     graphql.Omittable[*ReleaseYearFacetInput]     `json:"releaseYear,omitempty"`
 	VideoResolution graphql.Omittable[*VideoResolutionFacetInput] `json:"videoResolution,omitempty"`
 	VideoSource     graphql.Omittable[*VideoSourceFacetInput]     `json:"videoSource,omitempty"`
+}
+
+type TorrentContentFiltersInput struct {
+	// publishedAt is the first-seen time for DHT-crawled torrents
+	PublishedAt graphql.Omittable[*DateTimeRangeInput] `json:"publishedAt,omitempty"`
+	// publishedWithinDays is a convenience: only torrents published (first seen) within the last N days
+	PublishedWithinDays graphql.Omittable[*int]           `json:"publishedWithinDays,omitempty"`
+	Seeders             graphql.Omittable[*IntRangeInput] `json:"seeders,omitempty"`
+	Leechers            graphql.Omittable[*IntRangeInput] `json:"leechers,omitempty"`
+	// size in bytes
+	Size       graphql.Omittable[*IntRangeInput] `json:"size,omitempty"`
+	FilesCount graphql.Omittable[*IntRangeInput] `json:"filesCount,omitempty"`
 }
 
 type TorrentContentOrderByInput struct {

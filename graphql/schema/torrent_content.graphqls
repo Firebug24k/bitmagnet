@@ -10,9 +10,47 @@ input TorrentContentSearchQueryInput {
   hasNextPage: Boolean
   infoHashes: [Hash20!]
   facets: TorrentContentFacetsInput
+  """
+  filters are range constraints combined with AND (and with any facet filters)
+  """
+  filters: TorrentContentFiltersInput
   orderBy: [TorrentContentOrderByInput!]
   cached: Boolean
   aggregationBudget: Float
+}
+
+"""
+An inclusive numeric range; either bound may be omitted.
+"""
+input IntRangeInput {
+  gte: Int
+  lte: Int
+}
+
+"""
+An inclusive date/time range; either bound may be omitted.
+"""
+input DateTimeRangeInput {
+  gte: DateTime
+  lte: DateTime
+}
+
+input TorrentContentFiltersInput {
+  """
+  publishedAt is the first-seen time for DHT-crawled torrents
+  """
+  publishedAt: DateTimeRangeInput
+  """
+  publishedWithinDays is a convenience: only torrents published (first seen) within the last N days
+  """
+  publishedWithinDays: Int
+  seeders: IntRangeInput
+  leechers: IntRangeInput
+  """
+  size in bytes
+  """
+  size: IntRangeInput
+  filesCount: IntRangeInput
 }
 
 input ContentTypeFacetInput {

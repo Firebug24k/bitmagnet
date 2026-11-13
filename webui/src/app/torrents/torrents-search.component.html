@@ -17,6 +17,7 @@
       [mode]="breakpoints.sizeAtLeast('Medium') ? 'side' : 'over'"
       [opened]="breakpoints.sizeAtLeast('Medium')"
     >
+      <app-saved-searches />
       <mat-expansion-panel
         class="panel-content-type"
         [expanded]="breakpoints.sizeAtLeast('Medium')"
@@ -123,64 +124,79 @@
     </mat-drawer>
     <mat-drawer-content>
       <div class="search-form">
-        <div
-          class="form-field-container button-container button-container-toggle-drawer"
+        <button
+          type="button"
+          class="button-toggle-drawer"
+          mat-icon-button
+          (click)="drawer.toggle()"
+          [matTooltip]="t('torrents.toggle_drawer')"
         >
+          <mat-icon aria-label="Side nav toggle icon">{{
+            drawer.opened ? "menu_open" : "menu"
+          }}</mat-icon>
+        </button>
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            [placeholder]="t('torrents.search')"
+            [formControl]="queryString"
+            autocapitalize="none"
+            enterkeyhint="search"
+            aria-label="Search torrents"
+            (keyup.enter)="controller.setQueryString(queryString.value)"
+          />
+          @if (queryString.value) {
+            <button
+              type="button"
+              class="clear"
+              [matTooltip]="t('torrents.clear_search')"
+              (click)="queryString.reset(); controller.setQueryString(null)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
           <button
             type="button"
-            class="button-toggle-drawer"
-            mat-icon-button
-            (click)="drawer.toggle()"
-            [matTooltip]="t('torrents.toggle_drawer')"
+            class="go"
+            (click)="controller.setQueryString(queryString.value)"
           >
-            <mat-icon
-              aria-label="Side nav toggle icon"
-              fontSet="material-icons"
-              >{{
-                drawer.opened ? "arrow_circle_left" : "arrow_circle_right"
-              }}</mat-icon
-            >
+            Search
           </button>
         </div>
-        <div class="form-field-container form-field-container-search-query">
-          <mat-form-field subscriptSizing="dynamic">
-            <!--        todo: fix ios enter-->
-            <input
-              matInput
-              [placeholder]="t('torrents.search')"
-              [formControl]="queryString"
-              autocapitalize="none"
-              (keyup.enter)="controller.setQueryString(queryString.value)"
-            />
-            @if (queryString.value) {
-              <button
-                mat-icon-button
-                [matTooltip]="t('torrents.clear_search')"
-                (click)="queryString.reset(); controller.setQueryString(null)"
-              >
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </mat-form-field>
-        </div>
-        <div class="form-field-container form-field-container-order-by">
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>{{ t("torrents.order_by") }}</mat-label>
-            <mat-select
-              [value]="controls.orderBy.field"
-              (valueChange)="controller.selectOrderBy($event)"
-            >
-              @for (option of orderByOptions; track option.field) {
-                @if (option.field != "relevance" || queryString.value) {
-                  <mat-option [value]="option.field">
-                    {{ t("torrents.ordering." + option.field) }}
-                  </mat-option>
-                }
+        <button
+          type="button"
+          class="toolbar-button"
+          [class.on]="filtersOpen"
+          (click)="filtersOpen = !filtersOpen"
+          aria-label="Toggle filters"
+        >
+          <mat-icon>tune</mat-icon>
+          Filters
+          @if (activeFilterCount(controls); as n) {
+            <span class="badge">{{ n }}</span>
+          }
+        </button>
+        <div class="order-by">
+          <mat-icon class="sort-icon" [matTooltip]="t('torrents.order_by')"
+            >sort</mat-icon
+          >
+          <mat-select
+            [value]="controls.orderBy.field"
+            (valueChange)="controller.selectOrderBy($event)"
+            [aria-label]="t('torrents.order_by')"
+            panelWidth=""
+          >
+            @for (option of orderByOptions; track option.field) {
+              @if (option.field != "relevance" || queryString.value) {
+                <mat-option [value]="option.field">
+                  {{ t("torrents.ordering." + option.field) }}
+                </mat-option>
               }
-            </mat-select>
-          </mat-form-field>
+            }
+          </mat-select>
           <button
             mat-icon-button
+            class="direction"
             [matTooltip]="t('torrents.order_direction_toggle')"
             (click)="controller.toggleOrderByDirection()"
           >
@@ -189,18 +205,32 @@
             }}</mat-icon>
           </button>
         </div>
-        <div
-          class="form-field-container button-container button-container-refresh"
+        <button
+          mat-icon-button
+          class="refresh"
+          [matTooltip]="t('torrents.refresh')"
+          (click)="dataSource.refresh()"
         >
-          <button
-            mat-mini-fab
-            [matTooltip]="t('torrents.refresh')"
-            color="primary"
-            (click)="dataSource.refresh()"
-          >
-            <mat-icon>sync</mat-icon>
-          </button>
-        </div>
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+      <app-torrents-filters
+        [controller]="controller"
+        [filters]="controls.filters"
+        [expanded]="filtersOpen"
+      />
+      <div class="results-bar">
+        <span class="count">
+          @if (dataSource.loading$ | async) {
+            Searching…
+          } @else {
+            <strong>{{
+              dataSource.result.totalCount
+                | intEstimate: dataSource.result.totalCountIsEstimate
+            }}</strong>
+            {{ dataSource.result.totalCount === 1 ? "result" : "results" }}
+          }
+        </span>
       </div>
       <mat-divider />
       <app-torrents-bulk-actions
