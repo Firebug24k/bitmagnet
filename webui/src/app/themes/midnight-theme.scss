@@ -81,7 +81,14 @@ $_raised: #171b27;
   --mdc-linear-progress-track-color: transparent;
   --mat-toolbar-container-background-color: #{rgba($_bg, 0.8)};
   .mat-toolbar.toolbar-header {
+    background-color: #{rgba($_bg, 0.85)};
     backdrop-filter: blur(10px);
     border-bottom: 1px solid #{rgba(#fff, 0.08)};
+    --mat-toolbar-container-text-color: #e6e1f0;
+    .mat-icon[svgicon="magnet"],
+    h1 .mat-icon {
+      fill: #{mat.get-theme-color($theme, primary, 80)};
+      color: #{mat.get-theme-color($theme, primary, 80)};
+    }
   }
 }
