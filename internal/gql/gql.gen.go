@@ -373,6 +373,7 @@ type ComplexityRoot struct {
 		LeechersBefore func(childComplexity int) int
 		NodesQueried   func(childComplexity int) int
 		NodesResponded func(childComplexity int) int
+		NodesWithPeers func(childComplexity int) int
 		Ok             func(childComplexity int) int
 		Seeders        func(childComplexity int) int
 		SeedersBefore  func(childComplexity int) int
@@ -1930,6 +1931,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TorrentPeersRefreshResult.NodesResponded(childComplexity), true
 
+	case "TorrentPeersRefreshResult.nodesWithPeers":
+		if e.complexity.TorrentPeersRefreshResult.NodesWithPeers == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.NodesWithPeers(childComplexity), true
+
 	case "TorrentPeersRefreshResult.ok":
 		if e.complexity.TorrentPeersRefreshResult.Ok == nil {
 			break
@@ -2701,6 +2709,10 @@ type TorrentPeersRefreshResult {
   error: String
   nodesQueried: Int!
   nodesResponded: Int!
+  """
+  nodesWithPeers counts responding nodes that were tracking peers for the torrent
+  """
+  nodesWithPeers: Int!
   seedersBefore: Int
   leechersBefore: Int
   seeders: Int
@@ -12688,6 +12700,8 @@ func (ec *executionContext) fieldContext_TorrentMutation_refreshPeers(ctx contex
 				return ec.fieldContext_TorrentPeersRefreshResult_nodesQueried(ctx, field)
 			case "nodesResponded":
 				return ec.fieldContext_TorrentPeersRefreshResult_nodesResponded(ctx, field)
+			case "nodesWithPeers":
+				return ec.fieldContext_TorrentPeersRefreshResult_nodesWithPeers(ctx, field)
 			case "seedersBefore":
 				return ec.fieldContext_TorrentPeersRefreshResult_seedersBefore(ctx, field)
 			case "leechersBefore":
@@ -12919,6 +12933,50 @@ func (ec *executionContext) _TorrentPeersRefreshResult_nodesResponded(ctx contex
 }
 
 func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_nodesResponded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_nodesWithPeers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_nodesWithPeers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodesWithPeers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_nodesWithPeers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TorrentPeersRefreshResult",
 		Field:      field,
@@ -20488,6 +20546,11 @@ func (ec *executionContext) _TorrentPeersRefreshResult(ctx context.Context, sel 
 			}
 		case "nodesResponded":
 			out.Values[i] = ec._TorrentPeersRefreshResult_nodesResponded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodesWithPeers":
+			out.Values[i] = ec._TorrentPeersRefreshResult_nodesWithPeers(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

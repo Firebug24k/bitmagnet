@@ -720,6 +720,8 @@ export type TorrentPeersRefreshResult = {
   leechersBefore?: Maybe<Scalars["Int"]["output"]>;
   nodesQueried: Scalars["Int"]["output"];
   nodesResponded: Scalars["Int"]["output"];
+  /** nodesWithPeers counts responding nodes that were tracking peers for the torrent */
+  nodesWithPeers: Scalars["Int"]["output"];
   ok: Scalars["Boolean"]["output"];
   seeders?: Maybe<Scalars["Int"]["output"]>;
   seedersBefore?: Maybe<Scalars["Int"]["output"]>;
@@ -1412,6 +1414,7 @@ export type TorrentRefreshPeersMutation = {
       error?: string | null;
       nodesQueried: number;
       nodesResponded: number;
+      nodesWithPeers: number;
       seedersBefore?: number | null;
       leechersBefore?: number | null;
       seeders?: number | null;
@@ -2160,6 +2163,7 @@ export const TorrentRefreshPeersDocument = gql`
         error
         nodesQueried
         nodesResponded
+        nodesWithPeers
         seedersBefore
         leechersBefore
         seeders

@@ -51,6 +51,18 @@ func (l clientLogger) GetPeersScrape(
 	return res, err
 }
 
+func (l clientLogger) GetPeersScrapeLookup(
+	ctx context.Context,
+	addr netip.AddrPort,
+	infoHash dht.ID,
+) (GetPeersScrapeLookupResult, error) {
+	start := time.Now()
+	res, err := l.client.GetPeersScrapeLookup(ctx, addr, infoHash)
+	l.log(dht.QGetPeers+":scrape_lookup", addr, start, err)
+
+	return res, err
+}
+
 func (l clientLogger) SampleInfoHashes(
 	ctx context.Context,
 	addr netip.AddrPort,

@@ -53,6 +53,8 @@ type Result struct {
 	InfoHash       protocol.ID
 	NodesQueried   int
 	NodesResponded int
+	// NodesWithPeers counts responding nodes that returned BEP 33 scrape data for the hash.
+	NodesWithPeers int
 	SeedersBefore  model.NullUint
 	LeechersBefore model.NullUint
 	Seeders        model.NullUint
@@ -74,9 +76,13 @@ type refresher struct {
 	dao    *dao.Query
 }
 
+// minRespondedForEmpty is how many nodes must answer a converged lookup before "no node has scrape
+// data" is trusted as "no peers" (0/0) rather than reported as an inconclusive lookup.
+const minRespondedForEmpty = 8
+
 // scraper is the subset of the DHT client used here (eases testing).
 type scraper interface {
-	GetPeersScrape(ctx context.Context, addr netipAddrPort, infoHash protocol.ID) (client.GetPeersScrapeResult, error)
+	GetPeersScrapeLookup(ctx context.Context, addr netipAddrPort, infoHash protocol.ID) (client.GetPeersScrapeLookupResult, error)
 }
 
 func (r *refresher) Refresh(ctx context.Context, infoHashes []protocol.ID) ([]Result, error) {
@@ -200,7 +206,7 @@ func lookup(
 			go func(c candidate) {
 				defer wg.Done()
 
-				sr, err := s.GetPeersScrape(ctx, c.addr, h)
+				sr, err := s.GetPeersScrapeLookup(ctx, c.addr, h)
 				if err != nil {
 					return
 				}
@@ -213,8 +219,12 @@ func lookup(
 				defer mu.Unlock()
 
 				res.NodesResponded++
-				bfSeeders = union(bfSeeders, &sr.BfSeeders)
-				bfPeers = union(bfPeers, &sr.BfPeers)
+
+				if sr.BfSeeders != nil && sr.BfPeers != nil {
+					res.NodesWithPeers++
+					bfSeeders = union(bfSeeders, sr.BfSeeders)
+					bfPeers = union(bfPeers, sr.BfPeers)
+				}
 
 				for _, n := range sr.Nodes {
 					discovered = append(discovered, candidate{id: n.ID, addr: n.Addr})
@@ -231,13 +241,20 @@ func lookup(
 		}
 	}
 
-	if res.NodesResponded == 0 {
+	switch {
+	case res.NodesResponded == 0:
 		res.Err = fmt.Errorf("none of the %d DHT nodes queried responded", res.NodesQueried)
-		return res
+	case res.NodesWithPeers > 0:
+		res.Seeders = model.NewNullUint(uint(bfSeeders.ApproximatedSize()))
+		res.Leechers = model.NewNullUint(uint(bfPeers.ApproximatedSize()))
+	case res.NodesResponded >= minRespondedForEmpty:
+		// the lookup reached the hash's neighbourhood and nobody is tracking peers: it's dead
+		res.Seeders = model.NewNullUint(0)
+		res.Leechers = model.NewNullUint(0)
+	default:
+		res.Err = fmt.Errorf("inconclusive: only %d of %d DHT nodes responded and none had peers",
+			res.NodesResponded, res.NodesQueried)
 	}
-
-	res.Seeders = model.NewNullUint(uint(bfSeeders.ApproximatedSize()))
-	res.Leechers = model.NewNullUint(uint(bfPeers.ApproximatedSize()))
 
 	return res
 }

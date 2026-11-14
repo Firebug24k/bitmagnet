@@ -22,6 +22,10 @@ type TorrentPeersRefreshResult {
   error: String
   nodesQueried: Int!
   nodesResponded: Int!
+  """
+  nodesWithPeers counts responding nodes that were tracking peers for the torrent
+  """
+  nodesWithPeers: Int!
   seedersBefore: Int
   leechersBefore: Int
   seeders: Int

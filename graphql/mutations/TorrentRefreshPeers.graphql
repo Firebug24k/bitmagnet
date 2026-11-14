@@ -6,6 +6,7 @@ mutation TorrentRefreshPeers($infoHashes: [Hash20!]!) {
       error
       nodesQueried
       nodesResponded
+      nodesWithPeers
       seedersBefore
       leechersBefore
       seeders

@@ -80,6 +80,30 @@ func (a serverAdapter) GetPeersScrape(
 	}, nil
 }
 
+func (a serverAdapter) GetPeersScrapeLookup(
+	ctx context.Context,
+	addr netip.AddrPort,
+	infoHash protocol.ID,
+) (GetPeersScrapeLookupResult, error) {
+	res, err := a.server.Query(ctx, addr, dht.QGetPeers, dht.MsgArgs{ID: a.nodeID, InfoHash: infoHash, Scrape: 1})
+	if err != nil {
+		return GetPeersScrapeLookupResult{}, err
+	}
+
+	out := GetPeersScrapeLookupResult{
+		ID:     res.Msg.R.ID,
+		Values: extractValues(res.Msg),
+		Nodes:  extractNodes(res.Msg),
+	}
+
+	if res.Msg.R.BFpe != nil && res.Msg.R.BFsd != nil {
+		out.BfPeers = res.Msg.R.BFpe.ToBloomFilter()
+		out.BfSeeders = res.Msg.R.BFsd.ToBloomFilter()
+	}
+
+	return out, nil
+}
+
 func (a serverAdapter) SampleInfoHashes(
 	ctx context.Context,
 	addr netip.AddrPort,

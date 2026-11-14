@@ -325,6 +325,7 @@ this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names`):a
         error
         nodesQueried
         nodesResponded
+        nodesWithPeers
         seedersBefore
         leechersBefore
         seeders
