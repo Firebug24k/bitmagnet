@@ -358,11 +358,24 @@ type ComplexityRoot struct {
 	}
 
 	TorrentMutation struct {
-		Delete     func(childComplexity int, infoHashes []protocol.ID) int
-		DeleteTags func(childComplexity int, infoHashes []protocol.ID, tagNames []string) int
-		PutTags    func(childComplexity int, infoHashes []protocol.ID, tagNames []string) int
-		Reprocess  func(childComplexity int, input gen.TorrentReprocessInput) int
-		SetTags    func(childComplexity int, infoHashes []protocol.ID, tagNames []string) int
+		Delete       func(childComplexity int, infoHashes []protocol.ID) int
+		DeleteTags   func(childComplexity int, infoHashes []protocol.ID, tagNames []string) int
+		PutTags      func(childComplexity int, infoHashes []protocol.ID, tagNames []string) int
+		RefreshPeers func(childComplexity int, infoHashes []protocol.ID) int
+		Reprocess    func(childComplexity int, input gen.TorrentReprocessInput) int
+		SetTags      func(childComplexity int, infoHashes []protocol.ID, tagNames []string) int
+	}
+
+	TorrentPeersRefreshResult struct {
+		Error          func(childComplexity int) int
+		InfoHash       func(childComplexity int) int
+		Leechers       func(childComplexity int) int
+		LeechersBefore func(childComplexity int) int
+		NodesQueried   func(childComplexity int) int
+		NodesResponded func(childComplexity int) int
+		Ok             func(childComplexity int) int
+		Seeders        func(childComplexity int) int
+		SeedersBefore  func(childComplexity int) int
 	}
 
 	TorrentQuery struct {
@@ -461,6 +474,7 @@ type TorrentMutationResolver interface {
 	SetTags(ctx context.Context, obj *gqlmodel.TorrentMutation, infoHashes []protocol.ID, tagNames []string) (*string, error)
 	DeleteTags(ctx context.Context, obj *gqlmodel.TorrentMutation, infoHashes []protocol.ID, tagNames []string) (*string, error)
 	Reprocess(ctx context.Context, obj *gqlmodel.TorrentMutation, input gen.TorrentReprocessInput) (*string, error)
+	RefreshPeers(ctx context.Context, obj *gqlmodel.TorrentMutation, infoHashes []protocol.ID) ([]gqlmodel.TorrentPeersRefreshResult, error)
 }
 type TorrentQueryResolver interface {
 	Files(ctx context.Context, obj *gqlmodel.TorrentQuery, input gqlmodel.TorrentFilesQueryInput) (query.GenericResult[model.TorrentFile], error)
@@ -1838,6 +1852,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TorrentMutation.PutTags(childComplexity, args["infoHashes"].([]protocol.ID), args["tagNames"].([]string)), true
 
+	case "TorrentMutation.refreshPeers":
+		if e.complexity.TorrentMutation.RefreshPeers == nil {
+			break
+		}
+
+		args, err := ec.field_TorrentMutation_refreshPeers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TorrentMutation.RefreshPeers(childComplexity, args["infoHashes"].([]protocol.ID)), true
+
 	case "TorrentMutation.reprocess":
 		if e.complexity.TorrentMutation.Reprocess == nil {
 			break
@@ -1861,6 +1887,69 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TorrentMutation.SetTags(childComplexity, args["infoHashes"].([]protocol.ID), args["tagNames"].([]string)), true
+
+	case "TorrentPeersRefreshResult.error":
+		if e.complexity.TorrentPeersRefreshResult.Error == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.Error(childComplexity), true
+
+	case "TorrentPeersRefreshResult.infoHash":
+		if e.complexity.TorrentPeersRefreshResult.InfoHash == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.InfoHash(childComplexity), true
+
+	case "TorrentPeersRefreshResult.leechers":
+		if e.complexity.TorrentPeersRefreshResult.Leechers == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.Leechers(childComplexity), true
+
+	case "TorrentPeersRefreshResult.leechersBefore":
+		if e.complexity.TorrentPeersRefreshResult.LeechersBefore == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.LeechersBefore(childComplexity), true
+
+	case "TorrentPeersRefreshResult.nodesQueried":
+		if e.complexity.TorrentPeersRefreshResult.NodesQueried == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.NodesQueried(childComplexity), true
+
+	case "TorrentPeersRefreshResult.nodesResponded":
+		if e.complexity.TorrentPeersRefreshResult.NodesResponded == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.NodesResponded(childComplexity), true
+
+	case "TorrentPeersRefreshResult.ok":
+		if e.complexity.TorrentPeersRefreshResult.Ok == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.Ok(childComplexity), true
+
+	case "TorrentPeersRefreshResult.seeders":
+		if e.complexity.TorrentPeersRefreshResult.Seeders == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.Seeders(childComplexity), true
+
+	case "TorrentPeersRefreshResult.seedersBefore":
+		if e.complexity.TorrentPeersRefreshResult.SeedersBefore == nil {
+			break
+		}
+
+		return e.complexity.TorrentPeersRefreshResult.SeedersBefore(childComplexity), true
 
 	case "TorrentQuery.files":
 		if e.complexity.TorrentQuery.Files == nil {
@@ -2599,6 +2688,23 @@ type TorrentMutation {
   setTags(infoHashes: [Hash20!]!, tagNames: [String!]!): Void
   deleteTags(infoHashes: [Hash20!], tagNames: [String!]): Void
   reprocess(input: TorrentReprocessInput!): Void
+  """
+  refreshPeers runs a live DHT lookup (BEP 33 scrape) for each torrent and saves the new
+  seeder/leecher estimates, including to the counts used by search, sorting and filters
+  """
+  refreshPeers(infoHashes: [Hash20!]!): [TorrentPeersRefreshResult!]!
+}
+
+type TorrentPeersRefreshResult {
+  infoHash: Hash20!
+  ok: Boolean!
+  error: String
+  nodesQueried: Int!
+  nodesResponded: Int!
+  seedersBefore: Int
+  leechersBefore: Int
+  seeders: Int
+  leechers: Int
 }
 
 input TorrentReprocessInput {
@@ -3323,6 +3429,34 @@ func (ec *executionContext) field_TorrentMutation_putTags_argsTagNames(
 	}
 
 	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_TorrentMutation_refreshPeers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_TorrentMutation_refreshPeers_argsInfoHashes(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["infoHashes"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_TorrentMutation_refreshPeers_argsInfoHashes(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]protocol.ID, error) {
+	if _, ok := rawArgs["infoHashes"]; !ok {
+		var zeroVal []protocol.ID
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("infoHashes"))
+	if tmp, ok := rawArgs["infoHashes"]; ok {
+		return ec.unmarshalNHash202ᚕgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋprotocolᚐIDᚄ(ctx, tmp)
+	}
+
+	var zeroVal []protocol.ID
 	return zeroVal, nil
 }
 
@@ -6300,6 +6434,8 @@ func (ec *executionContext) fieldContext_Mutation_torrent(_ context.Context, fie
 				return ec.fieldContext_TorrentMutation_deleteTags(ctx, field)
 			case "reprocess":
 				return ec.fieldContext_TorrentMutation_reprocess(ctx, field)
+			case "refreshPeers":
+				return ec.fieldContext_TorrentMutation_refreshPeers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TorrentMutation", field.Name)
 		},
@@ -12499,6 +12635,462 @@ func (ec *executionContext) fieldContext_TorrentMutation_reprocess(ctx context.C
 	if fc.Args, err = ec.field_TorrentMutation_reprocess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentMutation_refreshPeers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentMutation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentMutation_refreshPeers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TorrentMutation().RefreshPeers(rctx, obj, fc.Args["infoHashes"].([]protocol.ID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]gqlmodel.TorrentPeersRefreshResult)
+	fc.Result = res
+	return ec.marshalNTorrentPeersRefreshResult2ᚕgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐTorrentPeersRefreshResultᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentMutation_refreshPeers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentMutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "infoHash":
+				return ec.fieldContext_TorrentPeersRefreshResult_infoHash(ctx, field)
+			case "ok":
+				return ec.fieldContext_TorrentPeersRefreshResult_ok(ctx, field)
+			case "error":
+				return ec.fieldContext_TorrentPeersRefreshResult_error(ctx, field)
+			case "nodesQueried":
+				return ec.fieldContext_TorrentPeersRefreshResult_nodesQueried(ctx, field)
+			case "nodesResponded":
+				return ec.fieldContext_TorrentPeersRefreshResult_nodesResponded(ctx, field)
+			case "seedersBefore":
+				return ec.fieldContext_TorrentPeersRefreshResult_seedersBefore(ctx, field)
+			case "leechersBefore":
+				return ec.fieldContext_TorrentPeersRefreshResult_leechersBefore(ctx, field)
+			case "seeders":
+				return ec.fieldContext_TorrentPeersRefreshResult_seeders(ctx, field)
+			case "leechers":
+				return ec.fieldContext_TorrentPeersRefreshResult_leechers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TorrentPeersRefreshResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TorrentMutation_refreshPeers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_infoHash(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_infoHash(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InfoHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(protocol.ID)
+	fc.Result = res
+	return ec.marshalNHash202githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋprotocolᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_infoHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Hash20 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_ok(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_ok(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ok, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_ok(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_error(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_nodesQueried(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_nodesQueried(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodesQueried, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_nodesQueried(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_nodesResponded(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_nodesResponded(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodesResponded, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_nodesResponded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_seedersBefore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_seedersBefore(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SeedersBefore, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.NullUint)
+	fc.Result = res
+	return ec.marshalOInt2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋmodelᚐNullUint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_seedersBefore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_leechersBefore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_leechersBefore(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LeechersBefore, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.NullUint)
+	fc.Result = res
+	return ec.marshalOInt2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋmodelᚐNullUint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_leechersBefore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_seeders(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_seeders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Seeders, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.NullUint)
+	fc.Result = res
+	return ec.marshalOInt2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋmodelᚐNullUint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_seeders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TorrentPeersRefreshResult_leechers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.TorrentPeersRefreshResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TorrentPeersRefreshResult_leechers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Leechers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(model.NullUint)
+	fc.Result = res
+	return ec.marshalOInt2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋmodelᚐNullUint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TorrentPeersRefreshResult_leechers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TorrentPeersRefreshResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -19807,6 +20399,106 @@ func (ec *executionContext) _TorrentMutation(ctx context.Context, sel ast.Select
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "refreshPeers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TorrentMutation_refreshPeers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var torrentPeersRefreshResultImplementors = []string{"TorrentPeersRefreshResult"}
+
+func (ec *executionContext) _TorrentPeersRefreshResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.TorrentPeersRefreshResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, torrentPeersRefreshResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TorrentPeersRefreshResult")
+		case "infoHash":
+			out.Values[i] = ec._TorrentPeersRefreshResult_infoHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ok":
+			out.Values[i] = ec._TorrentPeersRefreshResult_ok(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._TorrentPeersRefreshResult_error(ctx, field, obj)
+		case "nodesQueried":
+			out.Values[i] = ec._TorrentPeersRefreshResult_nodesQueried(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nodesResponded":
+			out.Values[i] = ec._TorrentPeersRefreshResult_nodesResponded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "seedersBefore":
+			out.Values[i] = ec._TorrentPeersRefreshResult_seedersBefore(ctx, field, obj)
+		case "leechersBefore":
+			out.Values[i] = ec._TorrentPeersRefreshResult_leechersBefore(ctx, field, obj)
+		case "seeders":
+			out.Values[i] = ec._TorrentPeersRefreshResult_seeders(ctx, field, obj)
+		case "leechers":
+			out.Values[i] = ec._TorrentPeersRefreshResult_leechers(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21777,6 +22469,54 @@ func (ec *executionContext) marshalNTorrentMetricsQueryResult2ᚖgithubᚗcomᚋ
 
 func (ec *executionContext) marshalNTorrentMutation2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐTorrentMutation(ctx context.Context, sel ast.SelectionSet, v gqlmodel.TorrentMutation) graphql.Marshaler {
 	return ec._TorrentMutation(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTorrentPeersRefreshResult2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐTorrentPeersRefreshResult(ctx context.Context, sel ast.SelectionSet, v gqlmodel.TorrentPeersRefreshResult) graphql.Marshaler {
+	return ec._TorrentPeersRefreshResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTorrentPeersRefreshResult2ᚕgithubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐTorrentPeersRefreshResultᚄ(ctx context.Context, sel ast.SelectionSet, v []gqlmodel.TorrentPeersRefreshResult) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTorrentPeersRefreshResult2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐTorrentPeersRefreshResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNTorrentQuery2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐTorrentQuery(ctx context.Context, sel ast.SelectionSet, v gqlmodel.TorrentQuery) graphql.Marshaler {

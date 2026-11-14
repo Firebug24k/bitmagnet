@@ -9,6 +9,23 @@ type TorrentMutation {
   setTags(infoHashes: [Hash20!]!, tagNames: [String!]!): Void
   deleteTags(infoHashes: [Hash20!], tagNames: [String!]): Void
   reprocess(input: TorrentReprocessInput!): Void
+  """
+  refreshPeers runs a live DHT lookup (BEP 33 scrape) for each torrent and saves the new
+  seeder/leecher estimates, including to the counts used by search, sorting and filters
+  """
+  refreshPeers(infoHashes: [Hash20!]!): [TorrentPeersRefreshResult!]!
+}
+
+type TorrentPeersRefreshResult {
+  infoHash: Hash20!
+  ok: Boolean!
+  error: String
+  nodesQueried: Int!
+  nodesResponded: Int!
+  seedersBefore: Int
+  leechersBefore: Int
+  seeders: Int
+  leechers: Int
 }
 
 input TorrentReprocessInput {

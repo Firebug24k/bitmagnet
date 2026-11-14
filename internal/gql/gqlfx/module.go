@@ -13,6 +13,9 @@ import (
 	"github.com/bitmagnet-io/bitmagnet/internal/lazy"
 	"github.com/bitmagnet-io/bitmagnet/internal/metrics/queuemetrics"
 	"github.com/bitmagnet-io/bitmagnet/internal/metrics/torrentmetrics"
+	"github.com/bitmagnet-io/bitmagnet/internal/peerrefresh"
+	"github.com/bitmagnet-io/bitmagnet/internal/protocol/dht/client"
+	"github.com/bitmagnet-io/bitmagnet/internal/protocol/dht/ktable"
 	"github.com/bitmagnet-io/bitmagnet/internal/processor"
 	"github.com/bitmagnet-io/bitmagnet/internal/queue/manager"
 	"github.com/bitmagnet-io/bitmagnet/internal/worker"
@@ -83,6 +86,9 @@ func New() fx.Option {
 							TorrentMetricsClient: tm,
 							Processor:            pr,
 							BlockingManager:      bm,
+							// the DHT client is resolved lazily on first refresh, so API-only
+							// workers don't open a DHT socket just by serving GraphQL:
+							PeerRefresher: peerrefresh.New(p.KTable, p.DHTClient, d),
 						}, nil
 					}),
 				}
@@ -111,6 +117,8 @@ type Params struct {
 	TorrentMetricsClient lazy.Lazy[torrentmetrics.Client]
 	Processor            lazy.Lazy[processor.Processor]
 	BlockingManager      lazy.Lazy[blocking.Manager]
+	KTable               ktable.Table
+	DHTClient            lazy.Lazy[client.Client]
 }
 
 type Result struct {

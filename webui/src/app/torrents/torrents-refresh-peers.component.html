@@ -1,0 +1,82 @@
+<mat-card>
+  <mat-card-content>
+    <p class="intro">
+      Look up live seeders/leechers on the DHT for the selected torrents and
+      save them (the list, sorting and seeder filters use the new counts).
+      Usually takes 5–30 seconds.
+    </p>
+    @if (items.length > maxRefresh) {
+      <p class="warn">
+        Only the first {{ maxRefresh }} of {{ items.length }} selected torrents
+        will be refreshed.
+      </p>
+    }
+  </mat-card-content>
+  <mat-card-actions class="button-row">
+    <button
+      mat-stroked-button
+      color="primary"
+      [disabled]="!items.length || running"
+      (click)="refresh()"
+    >
+      <mat-icon [class.spin]="running">sync</mat-icon>
+      {{
+        running
+          ? "Refreshing " + startedWith + "…"
+          : "Refresh peers for " +
+            (items.length > maxRefresh ? maxRefresh : items.length) +
+            (items.length === 1 ? " torrent" : " torrents")
+      }}
+    </button>
+    @if (rows.length && !running) {
+      <span class="summary">
+        Updated {{ okCount }} of {{ rows.length }}
+        @if (okCount < rows.length) {
+          · {{ rows.length - okCount }} failed
+        }
+      </span>
+    }
+  </mat-card-actions>
+  @if (rows.length) {
+    <table class="results">
+      <thead>
+        <tr>
+          <th>Torrent</th>
+          <th class="num">Seeders</th>
+          <th class="num">Leechers</th>
+          <th class="num" title="DHT nodes that answered / queried">Nodes</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of rows; track r.infoHash) {
+          <tr [class.failed]="!r.ok">
+            <td class="title" [title]="r.title">{{ r.title }}</td>
+            @if (r.ok) {
+              <td class="num">
+                <span class="before">{{ n(r.seedersBefore) }}</span>
+                <mat-icon>arrow_forward</mat-icon>
+                <strong
+                  [class.up]="delta(r.seedersBefore, r.seeders) > 0"
+                  [class.down]="delta(r.seedersBefore, r.seeders) < 0"
+                  >{{ n(r.seeders) }}</strong
+                >
+              </td>
+              <td class="num">
+                <span class="before">{{ n(r.leechersBefore) }}</span>
+                <mat-icon>arrow_forward</mat-icon>
+                <strong>{{ n(r.leechers) }}</strong>
+              </td>
+            } @else {
+              <td class="num error" colspan="2" [title]="r.error ?? ''">
+                {{ r.error }}
+              </td>
+            }
+            <td class="num nodes">
+              {{ r.nodesResponded }}/{{ r.nodesQueried }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</mat-card>

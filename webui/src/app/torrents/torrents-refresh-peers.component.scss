@@ -1,0 +1,88 @@
+.mat-mdc-card {
+  margin-bottom: 10px;
+}
+
+.intro {
+  margin: 0;
+  color: var(--bm-muted);
+  font-size: 0.88rem;
+}
+
+.warn {
+  margin: 6px 0 0;
+  color: var(--bm-ok);
+  font-size: 0.85rem;
+}
+
+.button-row {
+  gap: 12px;
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+}
+
+.summary {
+  font-size: 0.85rem;
+  color: var(--bm-muted);
+}
+
+.results {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0 12px;
+  font-size: 0.85rem;
+  th,
+  td {
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--bm-border);
+    text-align: left;
+  }
+  th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bm-muted);
+  }
+  .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .title {
+    max-width: 0;
+    width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin: 0 4px;
+    color: var(--bm-muted);
+  }
+  .before,
+  .nodes {
+    color: var(--bm-muted);
+  }
+  strong.up {
+    color: var(--bm-good);
+  }
+  strong.down {
+    color: var(--bm-poor);
+  }
+  tr.failed .error {
+    color: var(--bm-ok);
+    text-align: left;
+    white-space: normal;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

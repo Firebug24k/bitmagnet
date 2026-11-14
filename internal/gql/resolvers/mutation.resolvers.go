@@ -6,6 +6,7 @@ package resolvers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/bitmagnet-io/bitmagnet/internal/classifier"
 	"github.com/bitmagnet-io/bitmagnet/internal/gql"
@@ -69,6 +70,20 @@ func (r *torrentMutationResolver) Reprocess(ctx context.Context, obj *gqlmodel.T
 	}
 
 	return nil, r.Processor.Process(ctx, params)
+}
+
+// RefreshPeers is the resolver for the refreshPeers field.
+func (r *torrentMutationResolver) RefreshPeers(ctx context.Context, obj *gqlmodel.TorrentMutation, infoHashes []protocol.ID) ([]gqlmodel.TorrentPeersRefreshResult, error) {
+	if r.PeerRefresher == nil {
+		return nil, errors.New("peer refresh is not available")
+	}
+
+	results, err := r.PeerRefresher.Refresh(ctx, infoHashes)
+	if err != nil {
+		return nil, err
+	}
+
+	return gqlmodel.NewTorrentPeersRefreshResults(results), nil
 }
 
 // Mutation returns gql.MutationResolver implementation.

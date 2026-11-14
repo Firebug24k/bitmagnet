@@ -15,11 +15,16 @@ import { ErrorsService } from "../errors/errors.service";
 import { GraphQLService } from "../graphql/graphql.service";
 import { AppModule } from "../app.module";
 import { TorrentReprocessComponent } from "./torrent-reprocess.component";
+import { TorrentsRefreshPeersComponent } from "./torrents-refresh-peers.component";
 
 @Component({
   selector: "app-torrents-bulk-actions",
   standalone: true,
-  imports: [AppModule, TorrentReprocessComponent],
+  imports: [
+    AppModule,
+    TorrentReprocessComponent,
+    TorrentsRefreshPeersComponent,
+  ],
   templateUrl: "./torrents-bulk-actions.component.html",
   styleUrl: "./torrents-bulk-actions.component.scss",
 })

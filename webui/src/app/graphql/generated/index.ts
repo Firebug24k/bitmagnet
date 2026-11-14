@@ -676,6 +676,11 @@ export type TorrentMutation = {
   delete?: Maybe<Scalars["Void"]["output"]>;
   deleteTags?: Maybe<Scalars["Void"]["output"]>;
   putTags?: Maybe<Scalars["Void"]["output"]>;
+  /**
+   * refreshPeers runs a live DHT lookup (BEP 33 scrape) for each torrent and saves the new
+   * seeder/leecher estimates, including to the counts used by search, sorting and filters
+   */
+  refreshPeers: Array<TorrentPeersRefreshResult>;
   reprocess?: Maybe<Scalars["Void"]["output"]>;
   setTags?: Maybe<Scalars["Void"]["output"]>;
 };
@@ -694,6 +699,10 @@ export type TorrentMutationPutTagsArgs = {
   tagNames: Array<Scalars["String"]["input"]>;
 };
 
+export type TorrentMutationRefreshPeersArgs = {
+  infoHashes: Array<Scalars["Hash20"]["input"]>;
+};
+
 export type TorrentMutationReprocessArgs = {
   input: TorrentReprocessInput;
 };
@@ -701,6 +710,19 @@ export type TorrentMutationReprocessArgs = {
 export type TorrentMutationSetTagsArgs = {
   infoHashes: Array<Scalars["Hash20"]["input"]>;
   tagNames: Array<Scalars["String"]["input"]>;
+};
+
+export type TorrentPeersRefreshResult = {
+  __typename?: "TorrentPeersRefreshResult";
+  error?: Maybe<Scalars["String"]["output"]>;
+  infoHash: Scalars["Hash20"]["output"];
+  leechers?: Maybe<Scalars["Int"]["output"]>;
+  leechersBefore?: Maybe<Scalars["Int"]["output"]>;
+  nodesQueried: Scalars["Int"]["output"];
+  nodesResponded: Scalars["Int"]["output"];
+  ok: Scalars["Boolean"]["output"];
+  seeders?: Maybe<Scalars["Int"]["output"]>;
+  seedersBefore?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type TorrentQuery = {
@@ -1373,6 +1395,29 @@ export type TorrentPutTagsMutationVariables = Exact<{
 export type TorrentPutTagsMutation = {
   __typename?: "Mutation";
   torrent: { __typename?: "TorrentMutation"; putTags?: void | null };
+};
+
+export type TorrentRefreshPeersMutationVariables = Exact<{
+  infoHashes: Array<Scalars["Hash20"]["input"]> | Scalars["Hash20"]["input"];
+}>;
+
+export type TorrentRefreshPeersMutation = {
+  __typename?: "Mutation";
+  torrent: {
+    __typename?: "TorrentMutation";
+    refreshPeers: Array<{
+      __typename?: "TorrentPeersRefreshResult";
+      infoHash: string;
+      ok: boolean;
+      error?: string | null;
+      nodesQueried: number;
+      nodesResponded: number;
+      seedersBefore?: number | null;
+      leechersBefore?: number | null;
+      seeders?: number | null;
+      leechers?: number | null;
+    }>;
+  };
 };
 
 export type TorrentReprocessMutationVariables = Exact<{
@@ -2101,6 +2146,37 @@ export class TorrentPutTagsGQL extends Apollo.Mutation<
   TorrentPutTagsMutationVariables
 > {
   override document = TorrentPutTagsDocument;
+
+  constructor(apollo: Apollo.Apollo) {
+    super(apollo);
+  }
+}
+export const TorrentRefreshPeersDocument = gql`
+  mutation TorrentRefreshPeers($infoHashes: [Hash20!]!) {
+    torrent {
+      refreshPeers(infoHashes: $infoHashes) {
+        infoHash
+        ok
+        error
+        nodesQueried
+        nodesResponded
+        seedersBefore
+        leechersBefore
+        seeders
+        leechers
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root",
+})
+export class TorrentRefreshPeersGQL extends Apollo.Mutation<
+  TorrentRefreshPeersMutation,
+  TorrentRefreshPeersMutationVariables
+> {
+  override document = TorrentRefreshPeersDocument;
 
   constructor(apollo: Apollo.Apollo) {
     super(apollo);

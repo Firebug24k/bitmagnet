@@ -1,0 +1,15 @@
+mutation TorrentRefreshPeers($infoHashes: [Hash20!]!) {
+  torrent {
+    refreshPeers(infoHashes: $infoHashes) {
+      infoHash
+      ok
+      error
+      nodesQueried
+      nodesResponded
+      seedersBefore
+      leechersBefore
+      seeders
+      leechers
+    }
+  }
+}

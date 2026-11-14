@@ -3,7 +3,7 @@
     animationDuration="0"
     class="tab-group-bulk-actions"
     [selectedIndex]="selectedTabIndex"
-    (focusChange)="selectTab($event.index == 5 ? 0 : $event.index)"
+    (focusChange)="selectTab($event.index == 6 ? 0 : $event.index)"
     [mat-stretch-tabs]="false"
   >
     <mat-tab
@@ -135,6 +135,22 @@
       <ng-template matTabContent>
         <app-torrent-reprocess
           [infoHashes]="selectedInfoHashes"
+          (updated)="updated.emit(null)"
+        />
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon>sync</mat-icon>
+        @if (breakpoints.sizeAtLeast("Medium")) {
+          <span class="label">Refresh peers</span>
+        }
+      </ng-template>
+
+      <ng-template matTabContent>
+        <app-torrents-refresh-peers
+          [items]="selectedItems"
           (updated)="updated.emit(null)"
         />
       </ng-template>
