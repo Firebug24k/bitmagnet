@@ -473,6 +473,8 @@ export type Torrent = {
   leechers?: Maybe<Scalars["Int"]["output"]>;
   magnetUri: Scalars["String"]["output"];
   name: Scalars["String"]["output"];
+  /** peersUpdatedAt is when seeders/leechers were last scraped (crawler re-scrape or on-demand refresh) */
+  peersUpdatedAt?: Maybe<Scalars["DateTime"]["output"]>;
   seeders?: Maybe<Scalars["Int"]["output"]>;
   singleFile?: Maybe<Scalars["Boolean"]["output"]>;
   size: Scalars["Int"]["output"];
@@ -1005,6 +1007,7 @@ export type TorrentFragment = {
   fileType?: FileType | null;
   seeders?: number | null;
   leechers?: number | null;
+  peersUpdatedAt?: string | null;
   tagNames: Array<string>;
   magnetUri: string;
   createdAt: string;
@@ -1044,6 +1047,7 @@ export type TorrentContentFragment = {
     fileType?: FileType | null;
     seeders?: number | null;
     leechers?: number | null;
+    peersUpdatedAt?: string | null;
     tagNames: Array<string>;
     magnetUri: string;
     createdAt: string;
@@ -1164,6 +1168,7 @@ export type TorrentContentSearchResultFragment = {
       fileType?: FileType | null;
       seeders?: number | null;
       leechers?: number | null;
+      peersUpdatedAt?: string | null;
       tagNames: Array<string>;
       magnetUri: string;
       createdAt: string;
@@ -1575,6 +1580,7 @@ export type TorrentContentSearchQuery = {
           fileType?: FileType | null;
           seeders?: number | null;
           leechers?: number | null;
+          peersUpdatedAt?: string | null;
           tagNames: Array<string>;
           magnetUri: string;
           createdAt: string;
@@ -1862,6 +1868,7 @@ export const TorrentFragmentDoc = gql`
     }
     seeders
     leechers
+    peersUpdatedAt
     tagNames
     magnetUri
     createdAt

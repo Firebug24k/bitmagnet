@@ -206,3 +206,26 @@ span.filesize {
   text-decoration-style: dotted;
   cursor: default;
 }
+
+.th-abbr {
+  cursor: help;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.td-peers-updated {
+  white-space: nowrap;
+  font-size: 0.85rem;
+  abbr {
+    cursor: default;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    &.stale {
+      color: var(--bm-muted);
+    }
+  }
+  .never {
+    color: var(--bm-muted);
+    font-style: italic;
+  }
+}

@@ -99,6 +99,11 @@ export class TorrentsTableComponent implements OnInit {
     return seeders >= 10 ? "good" : "ok";
   }
 
+  /** Counts older than the crawler's 30-day re-scrape threshold. */
+  isStale(at: string): boolean {
+    return Date.now() - new Date(at).getTime() > 30 * 24 * 3600 * 1000;
+  }
+
   markCopied(infoHash: string) {
     this.copied = infoHash;
     clearTimeout(this.copiedTimer);
@@ -146,6 +151,7 @@ export const allColumns = [
   "size",
   "publishedAt",
   "peers",
+  "peersUpdatedAt",
   "magnet",
 ] as const;
 

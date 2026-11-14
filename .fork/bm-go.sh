@@ -10,5 +10,5 @@ if [ "$MODE" = gen ] || [ "$MODE" = all ]; then
   run 'git config --global --add safe.directory /src; go run github.com/99designs/gqlgen generate --config ./internal/gql/gqlgen.yml 2>&1 | tail -20'
 fi
 if [ "$MODE" = test ] || [ "$MODE" = all ]; then
-  run 'go build ./... && go vet ./internal/gql/... ./internal/database/search/... ./internal/peerrefresh/... && go test ./internal/gql/... ./internal/database/search/... ./internal/peerrefresh/... 2>&1 | tail -25'
+  run 'go build ./... && go vet ./internal/gql/... ./internal/database/search/... ./internal/peerrefresh/... && go test ./internal/gql/... ./internal/database/search/... ./internal/peerrefresh/... ./internal/model/... 2>&1 | tail -25'
 fi

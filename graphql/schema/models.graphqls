@@ -13,6 +13,10 @@ type Torrent {
   sources: [TorrentSourceInfo!]!
   seeders: Int
   leechers: Int
+  """
+  peersUpdatedAt is when seeders/leechers were last scraped (crawler re-scrape or on-demand refresh)
+  """
+  peersUpdatedAt: DateTime
   tagNames: [String!]!
   magnetUri: String!
   createdAt: DateTime!

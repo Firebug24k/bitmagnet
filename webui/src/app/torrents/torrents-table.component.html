@@ -130,6 +130,28 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="peersUpdatedAt">
+      <th mat-header-cell *matHeaderCellDef>
+        <abbr
+          class="th-abbr"
+          matTooltip="When seeders/leechers were last checked on the DHT (crawler re-scrape or Refresh peers)"
+          >Peers checked</abbr
+        >
+      </th>
+      <td class="td-peers-updated" mat-cell *matCellDef="let i">
+        @if (item(i).torrent.peersUpdatedAt; as at) {
+          <abbr
+            [matTooltip]="at"
+            matTooltipClass="tooltip-published-at"
+            [class.stale]="isStale(at)"
+            >{{ at | timeAgo }}</abbr
+          >
+        } @else {
+          <span class="never">never</span>
+        }
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="magnet">
       <th mat-header-cell *matHeaderCellDef style="text-align: center">
         {{ t("torrents.magnet") }}

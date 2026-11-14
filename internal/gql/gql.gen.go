@@ -250,24 +250,25 @@ type ComplexityRoot struct {
 	}
 
 	Torrent struct {
-		CreatedAt    func(childComplexity int) int
-		Extension    func(childComplexity int) int
-		FileType     func(childComplexity int) int
-		FileTypes    func(childComplexity int) int
-		Files        func(childComplexity int) int
-		FilesCount   func(childComplexity int) int
-		FilesStatus  func(childComplexity int) int
-		HasFilesInfo func(childComplexity int) int
-		InfoHash     func(childComplexity int) int
-		Leechers     func(childComplexity int) int
-		MagnetURI    func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Seeders      func(childComplexity int) int
-		SingleFile   func(childComplexity int) int
-		Size         func(childComplexity int) int
-		Sources      func(childComplexity int) int
-		TagNames     func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Extension      func(childComplexity int) int
+		FileType       func(childComplexity int) int
+		FileTypes      func(childComplexity int) int
+		Files          func(childComplexity int) int
+		FilesCount     func(childComplexity int) int
+		FilesStatus    func(childComplexity int) int
+		HasFilesInfo   func(childComplexity int) int
+		InfoHash       func(childComplexity int) int
+		Leechers       func(childComplexity int) int
+		MagnetURI      func(childComplexity int) int
+		Name           func(childComplexity int) int
+		PeersUpdatedAt func(childComplexity int) int
+		Seeders        func(childComplexity int) int
+		SingleFile     func(childComplexity int) int
+		Size           func(childComplexity int) int
+		Sources        func(childComplexity int) int
+		TagNames       func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
 	}
 
 	TorrentContent struct {
@@ -1370,6 +1371,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Torrent.Name(childComplexity), true
+
+	case "Torrent.peersUpdatedAt":
+		if e.complexity.Torrent.PeersUpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Torrent.PeersUpdatedAt(childComplexity), true
 
 	case "Torrent.seeders":
 		if e.complexity.Torrent.Seeders == nil {
@@ -2564,6 +2572,10 @@ input TorrentMetricsQueryInput {
   sources: [TorrentSourceInfo!]!
   seeders: Int
   leechers: Int
+  """
+  peersUpdatedAt is when seeders/leechers were last scraped (crawler re-scrape or on-demand refresh)
+  """
+  peersUpdatedAt: DateTime
   tagNames: [String!]!
   magnetUri: String!
   createdAt: DateTime!
@@ -9485,6 +9497,47 @@ func (ec *executionContext) fieldContext_Torrent_leechers(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Torrent_peersUpdatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Torrent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Torrent_peersUpdatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PeersUpdatedAt(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Torrent_peersUpdatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Torrent",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Torrent_tagNames(ctx context.Context, field graphql.CollectedField, obj *model.Torrent) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Torrent_tagNames(ctx, field)
 	if err != nil {
@@ -9816,6 +9869,8 @@ func (ec *executionContext) fieldContext_TorrentContent_torrent(_ context.Contex
 				return ec.fieldContext_Torrent_seeders(ctx, field)
 			case "leechers":
 				return ec.fieldContext_Torrent_leechers(ctx, field)
+			case "peersUpdatedAt":
+				return ec.fieldContext_Torrent_peersUpdatedAt(ctx, field)
 			case "tagNames":
 				return ec.fieldContext_Torrent_tagNames(ctx, field)
 			case "magnetUri":
@@ -19663,6 +19718,8 @@ func (ec *executionContext) _Torrent(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Torrent_seeders(ctx, field, obj)
 		case "leechers":
 			out.Values[i] = ec._Torrent_leechers(ctx, field, obj)
+		case "peersUpdatedAt":
+			out.Values[i] = ec._Torrent_peersUpdatedAt(ctx, field, obj)
 		case "tagNames":
 			out.Values[i] = ec._Torrent_tagNames(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

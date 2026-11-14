@@ -28,6 +28,25 @@ func (t *Torrent) AfterFind(_ *gorm.DB) error {
 	return nil
 }
 
+// PeersUpdatedAt returns when seeders/leechers were last scraped (by the crawler or an on-demand
+// refresh): the latest update time of any source that has a seeder count, or nil if none has.
+func (t Torrent) PeersUpdatedAt() *time.Time {
+	var latest *time.Time
+
+	for _, source := range t.Sources {
+		if !source.Seeders.Valid {
+			continue
+		}
+
+		if latest == nil || source.UpdatedAt.After(*latest) {
+			u := source.UpdatedAt
+			latest = &u
+		}
+	}
+
+	return latest
+}
+
 // Seeders returns the highest number of seeders from all sources
 // todo: Add up bloom filters
 func (t Torrent) Seeders() NullUint {
